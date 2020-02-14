@@ -46,17 +46,17 @@ public class MainActivity extends AppCompatActivity {
     private void getTempData() {
 
         WeatherApiInterface weatherApiInterface=ApiClient.getRetrofit().create(WeatherApiInterface.class);
-        Call<TemperatureResponse> call = weatherApiInterface.getTemeratureData(et_cityName.getText().toString(),appId);
+        Call<TemperatureResponseModel> call = weatherApiInterface.getTemeratureData(et_cityName.getText().toString(),appId);
         Log.i(TAG, "URL: " + call.request().url());
-        call.enqueue(new Callback<TemperatureResponse>() {
+        call.enqueue(new Callback<TemperatureResponseModel>() {
             @Override
-            public void onResponse(Call<TemperatureResponse> call, Response<TemperatureResponse> response) {
+            public void onResponse(Call<TemperatureResponseModel> call, Response<TemperatureResponseModel> response) {
 
                 Log.i(TAG, "Callback is in onResponse() of Retrofit");
                 Log.i(TAG, "Response Code " + response.code() + response.message());
 
                 if(null != response && response.code() == 200){
-                    TemperatureResponse temperatureResponse=response.body();
+                    TemperatureResponseModel temperatureResponse=response.body();
                     Log.i(TAG, temperatureResponse.getMain().toString());
                     Float tempInKelvin= temperatureResponse.getMain().getTemp();
                     float tempInCelsius = tempInKelvin - 273.15F;
@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
 
 
             @Override
-            public void onFailure(Call<TemperatureResponse> call, Throwable t) {
+            public void onFailure(Call<TemperatureResponseModel> call, Throwable t) {
                 Log.i(TAG, "Callback is in onFailure() of Retrofit");
 
             }

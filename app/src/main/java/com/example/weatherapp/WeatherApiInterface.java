@@ -6,5 +6,5 @@ import retrofit2.http.Query;
 
 public interface WeatherApiInterface {
     @GET("data/2.5/weather?")
-    Call<TemperatureResponse> getTemeratureData(@Query("q")String city, @Query("appid") String appId);
+    Call<TemperatureResponseModel> getTemeratureData(@Query("q")String city, @Query("appid") String appId);
 }
