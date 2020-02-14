@@ -1,0 +1,351 @@
+package com.jnj.myacuvue.pro.fragments;
+
+import android.app.Dialog;
+import android.app.FragmentManager;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.jnj.myacuvue.pro.R;
+import com.jnj.myacuvue.pro.activities.AppointmentRequestProActivity;
+import com.jnj.myacuvue.pro.common.AppUtils;
+import com.jnj.myacuvue.pro.common.CalendarUtils;
+import com.jnj.myacuvue.pro.common.Constants;
+import com.jnj.myacuvue.pro.common.MyAcuvueLogger;
+import com.jnj.myacuvue.pro.common.MyAcuvuePreferences;
+import com.jnj.myacuvue.pro.enums.ERequestCode;
+import com.jnj.myacuvue.pro.interfaces.BlockSlotErrorMsgListener;
+import com.jnj.myacuvue.pro.interfaces.InvokeWebserviceListener;
+import com.jnj.myacuvue.pro.interfaces.RequestAppointmentListener;
+import com.jnj.myacuvue.pro.models.ConfirmedListResponseModel;
+import com.jnj.myacuvue.pro.models.StoreBusinessHoursModel;
+import com.jnj.myacuvue.pro.models.StoreCalendarBlockedHoursModel;
+import com.jnj.myacuvue.pro.models.StoreCalendarResponse;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+import static com.jnj.myacuvue.pro.common.Constants.CALENDAR_DAY_TAG;
+import static com.jnj.myacuvue.pro.common.Constants.CALENDAR_FORMAT;
+import static com.jnj.myacuvue.pro.common.Constants.CALENDAR_FORMAT_HOUR;
+import static com.jnj.myacuvue.pro.common.Constants.CALENDAR_INSTANCE;
+import static com.jnj.myacuvue.pro.common.Constants.CHINA_COUNTRY_CODE;
+import static com.jnj.myacuvue.pro.common.Constants.CONFIRMED_APPOINTMENTS;
+import static com.jnj.myacuvue.pro.common.Constants.CUSTOMER_NAME;
+import static com.jnj.myacuvue.pro.common.Constants.CUSTOMER_PHONE;
+import static com.jnj.myacuvue.pro.common.Constants.IS_RESCHEDULE_APPOINTMENT;
+
+/**
+ * Fragment to display appointment detailed view in PRO
+ *
+ * @author Anooja
+ */
+
+public class AppointmentProDetailFragment extends Fragment implements View.OnClickListener {
+
+    private static final String TAG = AppointmentProDetailFragment.class.getSimpleName();
+
+    private LinearLayout slotParentLayout;
+    private View prevSelectedView;
+    private Button btnSubmit;
+    private Date selectedDate;
+    private String selectedDateString;
+    private String selectedTimeSlot;
+    private StoreCalendarResponse calendarObj;
+    private boolean isReschedule;
+    private Dialog alertDialog;
+    private InvokeWebserviceListener webServiceListener;
+    ArrayList<String> blockSlots;
+    private String customerPhone;
+    private String customerName;
+    private ArrayList<String> approvedSlots;
+    private boolean isError;
+    private BlockSlotErrorMsgListener blockSlotErrorMsgListener;
+
+    private ArrayList<StoreBusinessHoursModel> businessHoursObjectList;
+    private List<ConfirmedListResponseModel> approvedList;
+
+    private RequestAppointmentListener appointmentListener;
+
+    private static  String DATE_DISPLAY__DAY_FORMAT = "EEE, dd MMMM yyyy";
+    private String TAIWAN_DATE_DISPLAY_FORMAT;
+    private static final String DATE_SFDC_FORMAT = "dd-MM-yyyy";
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Bundle bundle = getArguments();
+        if (null != getArguments()) {
+            isReschedule = getArguments().getBoolean(IS_RESCHEDULE_APPOINTMENT, false);
+            calendarObj = (StoreCalendarResponse) getArguments().getSerializable(CALENDAR_INSTANCE);
+            customerPhone = getArguments().getString(CUSTOMER_PHONE);
+            customerName = getArguments().getString(CUSTOMER_NAME);
+            approvedList = (List<ConfirmedListResponseModel>) getArguments().getSerializable
+                    (CONFIRMED_APPOINTMENTS);
+            String selectedDateString = bundle.getString(CALENDAR_DAY_TAG, "");
+            DateFormat dateFormat = new SimpleDateFormat(CALENDAR_FORMAT, Locale.getDefault());
+            try {
+                selectedDate = dateFormat.parse(selectedDateString);
+                this.selectedDateString = getDateInSFDCFormat(selectedDate);
+
+            } catch (ParseException e) {
+                MyAcuvueLogger.e(TAG, "ParseException in OnCreate" + e.getMessage());
+            }
+            approvedSlots = new ArrayList<>();
+            if (approvedList != null && !approvedList.isEmpty()) {
+                for (int i = 0; i < approvedList.size(); i++) {
+                    if (approvedList.get(i).getAppointmentDate().equals(this.selectedDateString)) {
+                        approvedSlots.add(approvedList.get(i).getAppointmentTime());
+                    }
+                }
+            }
+        }
+
+
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_appointment_details_pro, container,
+                false);
+        setupToolbar(rootView);
+
+        initializeView(rootView);
+
+        return rootView;
+    }
+
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+    }
+
+    private void initializeView(View v) {
+        //Taiwan date format
+        TAIWAN_DATE_DISPLAY_FORMAT=getString(R.string.date_formatter);
+
+        // Add business hours to the layout
+        TextView tvDate = (TextView) v.findViewById(R.id.tv_dateSelected);
+
+        //Changing the date format for Taiwan Region
+        if(MyAcuvuePreferences.getCountryCode().equals(Constants.TAIWAN_COUNTRY_CODE)){
+            tvDate.setText(getDateInCalendarDisplayFormatWithDayTaiwan(selectedDate));
+        }
+        else {
+            tvDate.setText(getDateInCalendarDisplayFormatWithDay(selectedDate));
+        }
+        btnSubmit = ((Button) v.findViewById(R.id.btn_submit));
+        btnSubmit.setEnabled(false);
+        if (isReschedule) {
+            btnSubmit.setText(getResources().getString(R
+                    .string.reschedule));
+        } else {
+            btnSubmit.setText(getResources().getString(R
+                    .string.block));
+        }
+        btnSubmit.setOnClickListener(this);
+        slotParentLayout = (LinearLayout) v.findViewById(R.id.ll_slots);
+        blockSlots = new ArrayList<>();
+
+    }
+
+    /**
+     * Adds the business Hour slots to the layout
+     */
+    private void addBusinessHourSlots() {
+        prevSelectedView = null;
+        btnSubmit.setEnabled(false);
+        if (slotParentLayout.getChildCount() > 0) {
+            slotParentLayout.removeAllViews();
+        }
+
+        if (businessHoursObjectList != null && businessHoursObjectList.size() > 0) {
+            int businessHoursCount = businessHoursObjectList.size(); // Business Hour list
+            int totalLytCount = businessHoursCount / 3; // Find child layout count
+            int remSlots = businessHoursCount % 3;
+
+            boolean hasHiddenChildren = false;
+            if (remSlots > 0) { // Means last layiout has child views < 3
+                totalLytCount = totalLytCount + 1;
+                hasHiddenChildren = true;
+            }
+
+            int attributesIndex = 0;
+            for (int lytCount = 0; lytCount < totalLytCount; lytCount++) {
+                // inflate Inner layouts
+                ViewGroup slotsLayout = (ViewGroup) getActivity().getLayoutInflater().inflate(R
+                        .layout.layout_calendar_slots_view, slotParentLayout, false);
+
+                for (int childCount = 0; childCount < 3; childCount++)
+                    if (hasHiddenChildren // last added layout has hidden child views
+                            && lytCount == totalLytCount - 1 // check if current layout is last one
+                            && childCount >= remSlots) {// Make only child views(=remSlots) visible
+                        break;
+                    } else {
+
+                        // Add the time slot obj values to the child views
+                        TextView tvSlot = (TextView) slotsLayout.getChildAt(childCount);
+                        tvSlot.setVisibility(View.VISIBLE);
+                        tvSlot.setTag(businessHoursObjectList.get(attributesIndex).getSlotTag());
+                        String slotText = businessHoursObjectList.get(attributesIndex)
+                                .getSlotStartTime() +
+                                " - " + businessHoursObjectList.get(attributesIndex)
+                                .getSlotEndTime();
+                        tvSlot.setText(slotText);
+                        List<String> blockedHoursList = businessHoursObjectList.get
+                                (attributesIndex).getBlockedDates();
+                        if (null != blockedHoursList && blockedHoursList.size() > 0
+                                && blockedHoursList.contains(selectedDateString)) {
+                            tvSlot.setEnabled(false);
+                            blockSlots.add(businessHoursObjectList.get(attributesIndex)
+                                    .getSlotTag());
+                        }
+                        if(calendarObj!=null && calendarObj.getUTCTime()!=null) {
+                            String UTCDateInSFDCFormat = CalendarUtils.getDateFromUTCTimestamp(calendarObj.getUTCTime(), DATE_SFDC_FORMAT);
+                            if (selectedDateString.equals(UTCDateInSFDCFormat)) {
+                                String UTCTime = CalendarUtils.getDateFromUTCTimestamp(calendarObj.getUTCTime(), CALENDAR_FORMAT_HOUR);
+                                String[] endTimeSlot = businessHoursObjectList.get(attributesIndex)
+                                        .getSlotStartTime().split(":");
+                                String endTime = endTimeSlot[0];
+                                if (Integer.parseInt(UTCTime) >= Integer.parseInt(endTime)) {
+                                    tvSlot.setEnabled(false);
+                                    blockSlots.add(businessHoursObjectList.get(attributesIndex)
+                                            .getSlotTag());
+                                }
+                            }
+                        }
+
+                        tvSlot.setOnClickListener(this);
+                        attributesIndex++;
+                    }
+                slotParentLayout.addView(slotsLayout);
+
+                // Set the blocked count to the textView
+                //tvAppointmentCount.setText(String.valueOf(businessHoursCount - blockedCount));
+            }
+        }
+        //Get business slot
+
+    }
+
+    private String getBusinessSlot() {
+        String businessSlot = "";
+        for (int i = 0; i < businessHoursObjectList.size(); i++) {
+            String s = businessHoursObjectList.get(i).getSlotTag();
+            if (businessSlot != null && !businessSlot.equals(""))
+                businessSlot = businessSlot + "," + s;
+            else
+                businessSlot = s;
+
+        }
+        return businessSlot;
+    }
+
+    @Override
+    public void onClick(final View view) {
+        if (view.getId() == R.id.tv_slot_1
+                || view.getId() == R.id.tv_slot_2
+                || view.getId() == R.id.tv_slot_3
+                && view.isEnabled()
+                && view.getVisibility() == View.VISIBLE) {
+            btnSubmit.setEnabled(true);
+            if (!isReschedule) {
+
+                if (!view.isSelected()) {
+                    view.setSelected(true);
+                    selectedTimeSlot = (String) view.getTag();
+                    blockSlots.add(selectedTimeSlot);
+                } else {
+                    view.setSelected(false);
+                    selectedTimeSlot = (String) view.getTag();
+                    blockSlots.remove(selectedTimeSlot);
+                }
+                if (blockSlots.size() == 0) {
+                    btnSubmit.setEnabled(false);
+                }
+            } else {
+                if (prevSelectedView != null) {
+                    prevSelectedView.setSelected(false);
+                }
+                view.setSelected(true);
+                selectedTimeSlot = (String) view.getTag();
+                prevSelectedView = view;
+            }
+        } else if (view.getId() == R.id.btn_submit) {
+            if (!isReschedule) {
+                selectedTimeSlot = "";
+                isError = false;
+                String[] blockSlotArray = blockSlots.toArray(new String[blockSlots.size()]);
+                for (int counter = 0; counter < blockSlots.size(); counter++) {
+                    for (int counter2 = 0; counter < approvedSlots.size(); counter++) {
+                        if (blockSlots.get(counter2).equals(approvedSlots.get(counter))) {
+                            isError = true;
+                        }
+                    }
+
+                }
+                if (isError) {
+                    blockSlotErrorMsgListener.onShowBlockSlotsErrorMsg();
+                } else {
+                    for (String s : blockSlotArray) {
+                        if (selectedTimeSlot != null && !selectedTimeSlot.equals(""))
+                            selectedTimeSlot = selectedTimeSlot + "," + s;
+                        else
+                            selectedTimeSlot = s;
+                    }
+                }
+            }
+            if (!MyAcuvuePreferences.getCountryCode().equals(CHINA_COUNTRY_CODE)) {
+                appointmentListener.onRequestAppointmentClicked(selectedDateString,
+                        selectedTimeSlot, "");
+
+            } else {
+
+                appointmentListener.onRequestAppointmentClicked(selectedDateString,
+                        getBusinessSlot()
+                        , "");
+            }
+            if (isReschedule) {
+                showAlert();
+
+            } else {
+                if (!isError) {
+                    webServiceListener.onInvokeWebServiceRequested(ERequestCode
+                            .BLOCK_CALENDAR_TIME);
+                    blockSlots = new ArrayList<>();
+                }
+            }
+
+        }
+    }
+
+    /**
+     * Show Alert Message to user
+     */
+    protected void showAlert() {
+
+        try {
+
+            if (null == alertDialog || !alertDialog.isShowing()) {
+                alertDialog = AppUtils.getAlertDialog(getActivity());
+            }
+            alertDialog.setContentView(R.layout.layout_alert_dialog);
+            RelativeLayout rlParent = (RelativeLayout) alertDialog.f

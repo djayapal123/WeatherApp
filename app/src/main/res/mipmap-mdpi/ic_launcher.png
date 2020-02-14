@@ -1,0 +1,64 @@
+package com.jnj.myacuvue.pro.activities;
+
+import android.graphics.Typeface;
+import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.Html;
+import android.text.InputFilter;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
+
+import com.jnj.myacuvue.pro.R;
+import com.jnj.myacuvue.pro.adapters.SpinnerProfileAdapter;
+import com.jnj.myacuvue.pro.common.AppUtils;
+import com.jnj.myacuvue.pro.common.MyAcuvueLogger;
+import com.jnj.myacuvue.pro.common.MyAcuvuePreferences;
+import com.jnj.myacuvue.pro.models.ProProfileDetailsModel;
+
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+
+import static com.jnj.myacuvue.pro.common.Constants.HK_COUNTRY_CODE;
+import static com.jnj.myacuvue.pro.common.Constants.IS_FROM_MENU;
+import static com.jnj.myacuvue.pro.common.Constants.SG_COUNTRY_CODE;
+import static com.jnj.myacuvue.pro.common.Constants.TAIWAN_COUNTRY_CODE;
+
+/**
+ * Accepts User Profile Info
+ *
+ * @author Remya
+ */
+public class ProfileActivity extends BaseActivity implements View.OnClickListener {
+
+    private static final String TAG = ProfileActivity.class.getSimpleName();
+
+
+    private EditText etFirstName;
+    private EditText etLastName;
+    private EditText etOobNumber;
+    private Spinner spGender;
+    private Spinner spGraduationYear;
+    private Spinner spGraduationInstitute;
+    private Spinner spQualification;
+    private Spinner spOobClassification;
+    private CheckBox cbPrivacy;
+
+    private String firstName;
+    private S

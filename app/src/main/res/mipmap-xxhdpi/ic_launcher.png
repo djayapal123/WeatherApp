@@ -1,0 +1,187 @@
+package com.jnj.myacuvue.pro.activities;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.jnj.myacuvue.pro.R;
+import com.jnj.myacuvue.pro.common.AppUtils;
+import com.jnj.myacuvue.pro.common.MyAcuvueLogger;
+import com.jnj.myacuvue.pro.common.MyAcuvuePreferences;
+import com.jnj.myacuvue.pro.models.SecondaryRecoverResponse;
+
+import java.util.ArrayList;
+
+import static com.jnj.myacuvue.pro.R.anim.slide_in_right;
+import static com.jnj.myacuvue.pro.R.anim.slide_out_left;
+import static com.jnj.myacuvue.pro.common.Constants.LINK_SECONDARY_LOGIN;
+import static com.jnj.myacuvue.pro.common.Constants.OTP;
+import static com.jnj.myacuvue.pro.common.Constants.RECOVER_SECONDARY_LOGIN;
+import static com.jnj.myacuvue.pro.enums.ESecondaryLoginType.EMAIL_ID;
+
+/**
+ * Activity to accept user email to link/add secondary
+ *
+ * @author Remya
+ */
+
+public class EmailEntryActivity extends BaseActivity implements View.OnClickListener {
+
+    private static final String TAG = EmailEntryActivity.class.getSimpleName();
+
+    private EditText etEmailId;
+    private Button btnSendVerification;
+
+    private String emailId;
+    private boolean isAddEmailAddress;
+    private static final String SCREEN_NAME = "E-mail Screen";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_email_entry);
+
+        // Has value if Secondary Login is Success
+        Bundle bundleExtras = getIntent().getExtras();
+        if (null != bundleExtras) {
+            isAddEmailAddress = bundleExtras.getBoolean(LINK_SECONDARY_LOGIN, false);
+        }
+
+        setViews();
+
+        dismissKeypadOnTouch();
+
+        hideLogoOnKeypadVisible();
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        AppUtils.pushOpenScreenEvent(this,SCREEN_NAME);
+    }
+
+    /**
+     * Sets the views
+     */
+    private void setViews() {
+
+        TextView tvEnterEmail = (TextView) findViewById(R.id.tv_enter_email);
+        if (isAddEmailAddress) {
+            tvEnterEmail.setText(getString(R.string.enter_email));
+        }
+
+        etEmailId = (EditText) findViewById(R.id.et_emailId);
+        etEmailId.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.toString().trim().length() > 0) {
+                    btnSendVerification.setEnabled(true);
+                }
+                /*else {
+                    btnSendVerification.setEnabled(false);
+                }*/
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        ImageView ivClose = (ImageView) findViewById(R.id.iv_close);
+        ivClose.setOnClickListener(this);
+
+        btnSendVerification = (Button) findViewById(R.id.btn_sendVerification);
+        btnSendVerification.setOnClickListener(this);
+        //btnSendVerification.setEnabled(false);
+    }
+
+    /**
+     * Dismiss Keypad on parent layout touch
+     */
+    private void dismissKeypadOnTouch() {
+        dismissKeypad(findViewById(R.id.rl_parent));
+        dismissKeypad(findViewById(R.id.rl_parentInner));
+        setDismissKeypadListener(etEmailId);
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_sendVerification:
+                dismissKeypad(findViewById(R.id.btn_sendVerification));
+                emailId = etEmailId.getText().toString().trim();
+                if (AppUtils.isValidEmailId(emailId)) {
+                    showAlert(getString(R.string.email_invalid), false, false, false);
+                    etEmailId.requestFocus();
+                } else {
+                    if (isAddEmailAddress) {
+                        sendAddSecondaryDetails(EMAIL_ID, emailId);
+                    } else {
+                        sendRecoverSecondaryDetails(EMAIL_ID, emailId);
+                    }
+                }
+                break;
+            case R.id.iv_close:
+                finish();
+                break;
+            default:
+                break;
+        }
+    }
+
+
+    // Invoked after - Add Secondary Login - Email - Success
+    @Override
+    protected void onAddSecondaryResponseReceived(String message, String otp) {
+        if (null != message && message.length() > 0 ) {
+            MyAcuvueLogger.i(TAG, "OTP: " + otp);
+
+            showOTPActivity(LINK_SECONDARY_LOGIN, otp);
+        } else {
+            MyAcuvueLogger.e(TAG, "OTP in Response is Empty!!");
+            // Empty Server Response!! - This case should not come
+            showSnackBar(getString(R.string.unknown_error));
+        }
+    }
+
+
+    // Invoked after - Recover Using Secondary Login - Success
+    @Override
+    protected void onRecoverAccountResponseReceived(SecondaryRecoverResponse recoverResp) {
+
+        // Check if OTP is valid
+        // Add Secondary gets uniqueId in response, handled by Secondary Login Activity
+
+        String otp = recoverResp.getOtp();
+        String regionCode = recoverResp.getRegionCode();
+        String countryCode = recoverResp.getCountryCode();
+
+        supportedLanguagesList = recoverResp.getSupportedLanguages();
+        defaultLanguage = recoverResp.getDefaultLanguage();
+
+
+            MyAcuvueLogger.i(TAG, "Otp: " + otp);
+
+            if (null != regionCode && regionCode.length() > 0
+                    && null != countryCode && countryCode.length() > 0) {
+                MyAcuvuePreferences.setCountryISDCode(countryCode);
+                MyAcuvuePreferences.setCountryCode(regionCode);
+            }
+
+            if (null != supportedLanguagesList && supportedLanguagesList.size() > 0
+                    && null != defaultLanguage && defaultLanguage.length() > 0) {
+                setAppLanguage();
+           

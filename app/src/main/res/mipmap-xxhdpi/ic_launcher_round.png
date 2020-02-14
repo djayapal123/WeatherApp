@@ -1,0 +1,243 @@
+package com.jnj.myacuvue.pro.fragments;
+
+import android.app.FragmentManager;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+
+import com.jnj.myacuvue.pro.R;
+import com.jnj.myacuvue.pro.activities.AppointmentRequestProActivity;
+import com.jnj.myacuvue.pro.activities.StoreSelectionActivity;
+import com.jnj.myacuvue.pro.adapters.RecyclerApprovedListAdapter;
+import com.jnj.myacuvue.pro.adapters.RecyclerPendingListAdapter;
+import com.jnj.myacuvue.pro.common.MyAcuvueLogger;
+import com.jnj.myacuvue.pro.common.MyAcuvuePreferences;
+import com.jnj.myacuvue.pro.interfaces.ApprovedItemActionListener;
+import com.jnj.myacuvue.pro.interfaces.LoadActivityListener;
+import com.jnj.myacuvue.pro.interfaces.PendingItemActionListener;
+import com.jnj.myacuvue.pro.models.ConfirmedListResponseModel;
+import com.jnj.myacuvue.pro.models.PendingListResponseModel;
+import com.jnj.myacuvue.pro.models.RolesTaggedDetailsModel;
+import com.jnj.myacuvue.pro.views.CustomFontButton;
+import com.jnj.myacuvue.pro.views.CustomFontTextView;
+
+import java.io.Serializable;
+import java.util.List;
+
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_OK;
+import static com.jnj.myacuvue.pro.common.Constants.CONFIRMED_APPOINTMENTS;
+import static com.jnj.myacuvue.pro.common.Constants.IS_RESCHEDULE_APPOINTMENT;
+
+
+/**
+ * Fragment to display Pro MyStores AppointmentList
+ *
+ * @ author Anooja
+ */
+
+public class ApprovedPendingListFragment extends Fragment implements ApprovedItemActionListener,
+        PendingItemActionListener, View.OnClickListener {
+
+    private static final String TAG = ApprovedPendingListFragment.class.getSimpleName();
+    private RecyclerView rvApprovedList;
+    private RecyclerView rvPendingList;
+    private CustomFontTextView tvApprovedText;
+    private CustomFontTextView tvPendingText;
+    private CustomFontTextView tvNoApprovedText;
+    private CustomFontTextView tvNoPendingText;
+    public List<ConfirmedListResponseModel> approvedList;
+    public List<PendingListResponseModel> pendingList;
+    private ApprovedItemActionListener approvedItemActionListener;
+    private PendingItemActionListener pendingItemActionListener;
+    private LoadActivityListener listener;
+    private ImageView ivEditStore;
+    private CustomFontTextView tvStoreName;
+    private boolean isShowStoreSelection;
+
+    public ApprovedPendingListFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View rootView;
+        rootView = inflater.inflate(R.layout.fragment_appointment_list, container, false);
+        setViews(rootView);
+        //getStoreDetails();
+        return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (null != MyAcuvuePreferences.getStoresOfUser()
+                && MyAcuvuePreferences.getStoresOfUser().size() > 1) {
+            ivEditStore.setVisibility(View.VISIBLE);
+        } else {
+            ivEditStore.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        if (menuItem.getItemId() == android.R.id.home) {
+            if (getFragmentManager().getBackStackEntryCount() <= 1) {
+                getActivity().finish();
+            } else {
+                getFragmentManager().popBackStack(getFragmentManager().getBackStackEntryAt
+                        (getFragmentManager().getBackStackEntryCount() - 1).getId(), FragmentManager
+                        .POP_BACK_STACK_INCLUSIVE);
+            }
+        }
+        return super.onOptionsItemSelected(menuItem);
+    }
+
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        try {
+            listener = (LoadActivityListener) context;
+            approvedItemActionListener = (ApprovedItemActionListener) context;
+            pendingItemActionListener = (PendingItemActionListener) context;
+        } catch (ClassCastException castException) {
+            MyAcuvueLogger.e(TAG, "Activity Should Implement LoadMonthCalendarListener" +
+                    castException.getMessage());
+        }
+    }
+
+    /**
+     * Method to refresh the list when data changes
+     *
+     * @param confirmedList
+     */
+    public void refreshConfirmedList(List<ConfirmedListResponseModel> confirmedList) {
+        MyAcuvueLogger.e("Refresh Confirmed appointment list", "Refresh appointment list");
+        //getStoreDetails();
+        if (null != confirmedList) {
+            tvApprovedText.setVisibility(View.VISIBLE);
+            rvApprovedList.setVisibility(View.VISIBLE);
+            tvNoApprovedText.setVisibility(View.GONE);
+            approvedList = confirmedList;
+            populateApprovedListeAdapter(approvedList);
+        } else {
+            tvApprovedText.setVisibility(View.VISIBLE);
+            tvNoApprovedText.setVisibility(View.VISIBLE);
+            rvApprovedList.setVisibility(View.GONE);
+        }
+        //Make the approved section as GONE
+        if(null != MyAcuvuePreferences.getApprovedAppointment().getIsSectionRequired() ){
+            tvApprovedText.setVisibility(View.GONE);
+            tvNoApprovedText.setVisibility(View.GONE);
+            rvApprovedList.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Method to refresh the list when data changes
+     *
+     * @param pendingList
+     */
+    public void refreshPendingList(List<PendingListResponseModel> pendingList) {
+        MyAcuvueLogger.e("Refresh Confirmed appointment list", "Refresh appointment list");
+        //getStoreDetails();
+        if (null != pendingList ) {
+            tvPendingText.setVisibility(View.VISIBLE);
+            rvPendingList.setVisibility(View.VISIBLE);
+            tvNoPendingText.setVisibility(View.GONE);
+            this.pendingList = pendingList;
+            populatePendingListAdapter(pendingList);
+        } else {
+            tvPendingText.setVisibility(View.VISIBLE);
+            rvPendingList.setVisibility(View.GONE);
+            tvNoPendingText.setVisibility(View.VISIBLE);
+        }
+
+        //Make the pending section as GONE
+        if(null != MyAcuvuePreferences.getPendingAppointment().getIsSectionRequired() ){
+            tvPendingText.setVisibility(View.GONE);
+            rvPendingList.setVisibility(View.GONE);
+            tvNoPendingText.setVisibility(View.GONE);
+        }
+    }
+
+    private void setViews(View rootView) {
+        ivEditStore = (ImageView) rootView.findViewById(R.id.iv_editStoreIcon);
+        ivEditStore.setOnClickListener(this);
+        rvPendingList = (RecyclerView) rootView.findViewById(R.id.rv_pending_request);
+        rvApprovedList = (RecyclerView) rootView.findViewById(R.id.rv_approved_request);
+        CustomFontButton btBlock = (CustomFontButton) rootView.findViewById(R.id.bt_block);
+        btBlock.setOnClickListener(this);
+        tvApprovedText = (CustomFontTextView) rootView.findViewById(R.id.tv_approvedRequest);
+        tvPendingText = (CustomFontTextView) rootView.findViewById(R.id.tv_pendingRequest);
+        tvNoApprovedText = (CustomFontTextView) rootView.findViewById(R.id.tv_noApprovedRequest);
+        tvNoPendingText = (CustomFontTextView) rootView.findViewById(R.id.tv_noPendingRequest);
+        tvStoreName = (CustomFontTextView) rootView.findViewById(R.id
+                .tv_storeName);
+        if (MyAcuvuePreferences.getStoreDetailsPro() != null && MyAcuvuePreferences
+                .getStoreDetailsPro().getStoreName() != null)
+            tvStoreName.setText(MyAcuvuePreferences.getStoreDetailsPro().getStoreName());
+    }
+
+    /**
+     * Set RecyclerView to approved List
+     */
+    private void populateApprovedListeAdapter(List<ConfirmedListResponseModel> approvedList) {
+        MyAcuvueLogger.e("approvedList Size", "approvedList: " + approvedList.size());
+        RecyclerApprovedListAdapter approvedListAdapter = new RecyclerApprovedListAdapter
+                (approvedList,getActivity());
+        MyAcuvueLogger.e("approvedListAdapter Size", "approvedListAdapter: " +
+                approvedListAdapter.getItemCount());
+
+        approvedListAdapter.onApprovedListAction(this);
+
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getContext());
+        rvApprovedList.setLayoutManager(layoutManager);
+        rvApprovedList.setItemAnimator(new DefaultItemAnimator());
+        // approvedListAdapter.notifyDataSetChanged();
+        // Set adapter
+        rvApprovedList.setAdapter(approvedListAdapter);
+
+        //rvApprovedList.invalidate();
+    }
+
+    /**
+     * Set RecyclerView to pending List
+     */
+    private void populatePendingListAdapter(List<PendingListResponseModel> pendingList) {
+        MyAcuvueLogger.e("pendingList Size", "pendingList: " + pendingList.size());
+        RecyclerPendingListAdapter pendingListAdapter = new RecyclerPendingListAdapter(pendingList,getActivity());
+        MyAcuvueLogger.e("pendingListAdapter Size", "pendingListAdapter: " + pendingListAdapter
+                .getItemCount());
+
+        pendingListAdapter.onPendingListAction(this);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getContext());
+        rvPendingList.setLayoutManager(mLayoutManager);
+        rvPendingList.setItemAnimator(new DefaultItemAnimator());
+        // pendingListAdapter.notifyDataSetChanged();
+        // Set adapter
+        rvPendingList.setAdapter(pendingListAdapter);
+
+        // rvPendingList.invalidate();
+
+    }
+
+
+    @Override
+    public void onApprovedListAction(ConfirmedListResponseModel approvedListItem, String action) {
+        approvedItemActionListener.onApprovedListAction(app

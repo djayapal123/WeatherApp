@@ -1,0 +1,104 @@
+package com.jnj.myacuvue.pro.activities;
+
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.content.ContextCompat;
+import android.text.Editable;
+import android.text.Html;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.jnj.myacuvue.pro.R;
+import com.jnj.myacuvue.pro.common.AppUtils;
+import com.jnj.myacuvue.pro.common.MyAcuvueLogger;
+import com.jnj.myacuvue.pro.common.MyAcuvuePreferences;
+import com.jnj.myacuvue.pro.models.OTPEmailRecoverValidateResponse;
+import com.jnj.myacuvue.pro.models.OTPPhoneGenerateResponse;
+import com.jnj.myacuvue.pro.models.OTPPhoneValidateResponse;
+import com.jnj.myacuvue.pro.models.ProProfileDetailsModel;
+import com.jnj.myacuvue.pro.models.SecondaryRecoverResponse;
+import com.jnj.myacuvue.pro.models.VoiceOTPPhoneGenerateResponse;
+
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import static com.jnj.myacuvue.pro.common.Constants.IS_UPDATE_PHONE_FROM_SETTINGS;
+import static com.jnj.myacuvue.pro.common.Constants.LINK_SECONDARY_LOGIN;
+import static com.jnj.myacuvue.pro.common.Constants.OTP;
+import static com.jnj.myacuvue.pro.common.Constants.PHONE_NUMBER;
+import static com.jnj.myacuvue.pro.common.Constants.PHONE_NUMBER_FROM_SERVER;
+import static com.jnj.myacuvue.pro.common.Constants.RECOVER_SECONDARY_LOGIN;
+import static com.jnj.myacuvue.pro.common.Constants.UPDATE_PHONE_NUMBER;
+import static com.jnj.myacuvue.pro.enums.ESecondaryLoginType.EMAIL_ID;
+
+/**
+ * Allows user to enter OTP
+ */
+public class OTPEntryActivity extends BaseActivity implements View.OnClickListener {
+
+    private static final String TAG = OTPEntryActivity.class.getSimpleName();
+
+    private EditText etOtpNumber1;
+    private EditText etOtpNumber2;
+    private EditText etOtpNumber3;
+    private EditText etOtpNumber4;
+    private Button btnVerify;
+
+    private String formattedPhoneNumber;
+    private String serverPhoneNumber;
+    private String otp;
+    private String emailId;
+    private boolean isValidateEmailOTPFromRetrieveSecondary;
+    private boolean isValidateEmailOTPFromLinkSecondary;
+    private boolean isValidateOTPFromUpdatePhone;
+    private boolean isUpdatePhoneFromSettings;
+    private String otpNumber1;
+    private String otpNumber2;
+    private String otpNumber3;
+    private String otpNumber4;
+    private static final String SCREEN_NAME = "OTP Screen";
+
+    private boolean isVoiceOtpOption =  true;
+    private boolean isResendSmsOption = true;
+    private boolean isResendSmsOptionAgain = true;
+    private TextView tvNoOTP;
+
+    private boolean isPhoneNumberUpdated;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_otp);
+
+        Bundle bundleExtras = getIntent().getExtras();
+        if (null != bundleExtras) {
+            if (bundleExtras.containsKey(PHONE_NUMBER)) {
+                // Validate OTP after user enters phone number
+                formattedPhoneNumber = bundleExtras.getString(PHONE_NUMBER);
+                serverPhoneNumber = bundleExtras.getString(PHONE_NUMBER_FROM_SERVER);
+                otp = bundleExtras.getString(OTP);
+                if (bundleExtras.containsKey(UPDATE_PHONE_NUMBER)) {
+                    // Validate OTP after user enters updated phone number
+                    isValidateOTPFromUpdatePhone = true;
+                    isUpdatePhoneFromSettings =
+                            bundleExtras.getBoolean(IS_UPDATE_PHONE_FROM_SETTINGS, false);
+                }
+            } else if (bundleExtras.containsKey(LINK_SECONDARY_LOGIN)) {
+                // Validate OTP after user enters email ID to link secondary
+                isValidateEmailOTPFromLinkSecondary = true;
+                emailId = bundleExtras.getString(EMAIL_ID.getValue());
+                otp = bundleExtras.getString(OTP);
+            } else if (bundleExtras.containsKey(RECOVER_SECONDARY_LOGIN)) {
+                // Validate OTP after user enters email ID to retrieve account
+                isValidateEmailOTPFromRetrieveSecondary = true;
+                emailId = bundleExtras.getString(EMAIL_ID.getValue());
+                otp = bundleExtras.getString(OTP);
+            }
+        }
+
+        setVie

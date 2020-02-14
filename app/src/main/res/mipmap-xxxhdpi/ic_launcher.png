@@ -1,0 +1,213 @@
+package com.jnj.myacuvue.pro.activities;
+
+import android.Manifest;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.TabLayout;
+import android.support.design.widget.TabLayout.Tab;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import com.facebook.CustomTabActivity;
+import com.jnj.myacuvue.pro.R;
+import com.jnj.myacuvue.pro.adapters.PagerProHomeAdapter;
+import com.jnj.myacuvue.pro.common.AppUtils;
+import com.jnj.myacuvue.pro.common.Constants;
+import com.jnj.myacuvue.pro.common.MyAcuvueLogger;
+import com.jnj.myacuvue.pro.common.MyAcuvuePreferences;
+import com.jnj.myacuvue.pro.fragments.ApprovedPendingListFragment;
+import com.jnj.myacuvue.pro.fragments.OperationsFragment;
+import com.jnj.myacuvue.pro.fragments.UserManagementFragment;
+import com.jnj.myacuvue.pro.interfaces.ApprovedItemActionListener;
+import com.jnj.myacuvue.pro.interfaces.IHamburgerMenuClickListener;
+import com.jnj.myacuvue.pro.interfaces.LoadActivityListener;
+import com.jnj.myacuvue.pro.interfaces.PendingItemActionListener;
+import com.jnj.myacuvue.pro.interfaces.ProModifyStaffListener;
+import com.jnj.myacuvue.pro.models.AppointmentBookingResponse;
+import com.jnj.myacuvue.pro.models.AppointmentListResponse;
+import com.jnj.myacuvue.pro.models.ConfirmedListResponseModel;
+import com.jnj.myacuvue.pro.models.ConfirmedPendingResponseModel;
+import com.jnj.myacuvue.pro.models.EyeHealthHubModel;
+import com.jnj.myacuvue.pro.models.HomeConfigDetailModel;
+import com.jnj.myacuvue.pro.models.MasterListAppointmentDetails;
+import com.jnj.myacuvue.pro.models.MasterListModel;
+import com.jnj.myacuvue.pro.models.MasterListResponse;
+import com.jnj.myacuvue.pro.models.MasterRoleDetailsModel;
+import com.jnj.myacuvue.pro.models.MasterRoleResponse;
+import com.jnj.myacuvue.pro.models.OperationCustomerProfileResponse;
+import com.jnj.myacuvue.pro.models.OperationsConsumerResponse;
+import com.jnj.myacuvue.pro.models.OperationsRecentCustomersResponse;
+import com.jnj.myacuvue.pro.models.PendingListResponseModel;
+import com.jnj.myacuvue.pro.models.ProSaveUserRoleAndStoreRequest;
+import com.jnj.myacuvue.pro.models.ProSaveUserRoleAndStoreResponse;
+import com.jnj.myacuvue.pro.models.ProUserDetailsResponse;
+import com.jnj.myacuvue.pro.models.ProUserListResponse;
+import com.jnj.myacuvue.pro.models.ProUserModel;
+import com.jnj.myacuvue.pro.models.ProUserRolesModel;
+import com.jnj.myacuvue.pro.models.ProUserSearchedStoresModel;
+import com.jnj.myacuvue.pro.models.ProUserStoresModel;
+import com.jnj.myacuvue.pro.models.RolesTaggedDetailsModel;
+import com.jnj.myacuvue.pro.models.RolesTaggedResponse;
+import com.salesforce.marketingcloud.MarketingCloudSdk;
+import com.salesforce.marketingcloud.registration.RegistrationManager;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import static com.jnj.myacuvue.pro.R.anim.slide_in_right;
+import static com.jnj.myacuvue.pro.R.anim.slide_out_left;
+import static com.jnj.myacuvue.pro.common.Constants.APPOINTMENT_ID;
+import static com.jnj.myacuvue.pro.common.Constants.APPROVED;
+import static com.jnj.myacuvue.pro.common.Constants.CUSTOMER_ID;
+import static com.jnj.myacuvue.pro.common.Constants.CUSTOMER_MOBILE_NUMBER;
+import static com.jnj.myacuvue.pro.common.Constants.CUSTOMER_NAME;
+import static com.jnj.myacuvue.pro.common.Constants.CUSTOMER_PHONE;
+import static com.jnj.myacuvue.pro.common.Constants.EYE_HEALTH_HUB;
+import static com.jnj.myacuvue.pro.common.Constants.HOME;
+import static com.jnj.myacuvue.pro.common.Constants.HOME_CATEGORY;
+import static com.jnj.myacuvue.pro.common.Constants.IS_MY_STORES;
+import static com.jnj.myacuvue.pro.common.Constants.IS_OPERATIONS;
+import static com.jnj.myacuvue.pro.common.Constants.IS_RESCHEDULE_APPOINTMENT;
+import static com.jnj.myacuvue.pro.common.Constants.IS_USER_MANAGEMENT;
+import static com.jnj.myacuvue.pro.common.Constants.PENDING;
+import static com.jnj.myacuvue.pro.common.Constants.PRO_USER_ID;
+import static com.jnj.myacuvue.pro.common.Constants.SG_COUNTRY_CODE;
+import static java.lang.Math.min;
+
+
+/**
+ * Home Activity - Tabbed View of Pro Application
+ *
+ * @author Remya
+ */
+public class HomeActivityProTab extends BaseActivity implements TabLayout
+        .OnTabSelectedListener, ViewPager.OnPageChangeListener, LoadActivityListener,
+        ProModifyStaffListener, ApprovedItemActionListener,
+        PendingItemActionListener, OperationsFragment.ConsumerSelectedListener, IHamburgerMenuClickListener, View.OnClickListener {
+
+    private static final String TAG = HomeActivityProTab.class.getSimpleName();
+
+    private TabLayout tlHome;
+    private ViewPager pagerHome;
+    private TextView tvHeader;
+
+    private ImageView ivDrawerIcon;
+    private DrawerLayout dlDrawerLayout;
+    private ListView lvDrawerList;
+    private ImageView ivCloseIcon;
+
+    private int tabCount;
+    private int selectedPosition;
+
+    private String categorySelected;
+    private ProSaveUserRoleAndStoreRequest modifyUser;
+    private boolean isDeleteUser;
+    public static boolean isBarcode;
+    private boolean isScanFromOperations;
+    private boolean isProUserListLoading;
+    private Dialog alertDialog;
+    private Locale currentLocale;
+    private boolean isRescheduled;
+    private boolean isStoreDetailsLoading;
+    private String phoneNumber;
+    private static final String SCREEN_NAME = "Tab Home Screen";
+    //private ApprovedPendingListFragment approvedPendingListFragment;
+    private String countryCode;
+    private boolean isRoleFetching;
+    private RolesTaggedResponse rolesResp;
+    private List<String> userManagementRoleList;
+    private List<String> myStoreRoleList;
+    private List<String> operationsRoleList;
+    private HashMap<String, Boolean> storeUserManageAccessMap;
+    private HashMap<String, Boolean> storeMyStoreAccessMap;
+    private HashMap<String, Boolean> storeOperationsAccessMap;
+    private boolean isShowStoreSelection;
+    private static final String SFDC_CONTACT_ID = "SFContactID";
+    private static final String APIGEE_CONTACT_ID = "ApigeeContactID";
+    private static final boolean SFDC_ID_HARD_CODING = false;
+    private PagerProHomeAdapter pagerAdapter;
+    private boolean isHQClicked;
+    private boolean isECPClicked;
+    private boolean isStoreSelected;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_pro_home_tab);
+
+        Bundle bundleExtras = getIntent().getExtras();
+        if (null != bundleExtras) {
+            categorySelected = bundleExtras.getString(HOME_CATEGORY, "");
+            if (categorySelected.equals(IS_USER_MANAGEMENT)) {
+                loadUsersUnderProUser();
+            } else if (categorySelected.equals(IS_MY_STORES)) {
+                getAppointmentDetails();
+            }
+        }
+        countryCode = MyAcuvuePreferences.getCountryCode();
+
+        setupToolbar();
+
+        setViews();
+
+        setNavigationDrawer(dlDrawerLayout, lvDrawerList);
+
+        setupPagerAdapter();
+
+        // Set the tab background
+        setTabBackground(3, getString(R.string.tab_myStore));
+        setTabBackground(0, getString(R.string.tab_user));
+        setTabBackground(1, getString(R.string.tab_operations));
+        setTabBackground(4, getString(R.string.eye));
+        setTabBackground(2, getString(R.string.tab_home));
+
+
+        //Set operations consumer scan bar code false
+        //MyAcuvuePreferences.setOperationsConsumerBarcode(false);
+        if(!categorySelected.equals(IS_OPERATIONS)){
+            selectedPosition=2;
+            pagerHome.setCurrentItem(selectedPosition);
+        }
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        AppUtils.pushOpenScreenEven

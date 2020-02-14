@@ -1,0 +1,55 @@
+package com.jnj.myacuvue.pro.backend;
+
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
+import java.text.SimpleDateFormat;
+
+
+import com.google.gson.Gson;
+import com.jnj.myacuvue.pro.BuildConfig;
+import com.jnj.myacuvue.pro.MyACUVUEProApp;
+import com.jnj.myacuvue.pro.R;
+import com.jnj.myacuvue.pro.common.AppUtils;
+import com.jnj.myacuvue.pro.common.Constants;
+import com.jnj.myacuvue.pro.common.MyAcuvueLogger;
+import com.jnj.myacuvue.pro.common.MyAcuvuePreferences;
+import com.jnj.myacuvue.pro.interfaces.APIInterfaceListener;
+import com.jnj.myacuvue.pro.interfaces.ServerResponseListener;
+import com.jnj.myacuvue.pro.models.AboutMyAcuvueRequest;
+import com.jnj.myacuvue.pro.models.AppointmentCountRequest;
+import com.jnj.myacuvue.pro.models.AppointmentListRequest;
+import com.jnj.myacuvue.pro.models.AppointmentModifyRequest;
+import com.jnj.myacuvue.pro.models.BaseConfigRequest;
+import com.jnj.myacuvue.pro.models.BlockTimeRequest;
+import com.jnj.myacuvue.pro.models.CountryListRequest;
+import com.jnj.myacuvue.pro.models.CouponImageRequest;
+import com.jnj.myacuvue.pro.models.CouponImageRetrofitResponse;
+import com.jnj.myacuvue.pro.models.CouponRequestModel;
+import com.jnj.myacuvue.pro.models.DebugAppRequestDataModel;
+import com.jnj.myacuvue.pro.models.DisableRecoveryRequest;
+import com.jnj.myacuvue.pro.models.GenerateTokenRequestModel;
+import com.jnj.myacuvue.pro.models.GenerateUUIDrequestModel;
+import com.jnj.myacuvue.pro.models.GetUUIDApigeeRequestModel;
+import com.jnj.myacuvue.pro.models.InsertUUIDRequestModel;
+import com.jnj.myacuvue.pro.models.MasterListRequest;
+import com.jnj.myacuvue.pro.models.MasterRoleRequest;
+import com.jnj.myacuvue.pro.models.NotificationEnableDisableRequest;
+import com.jnj.myacuvue.pro.models.OTPEmailRecoverValidateRequest;
+import com.jnj.myacuvue.pro.models.OTPEmailValidateRequest;
+import com.jnj.myacuvue.pro.models.OTPNewPhoneGenerateRequest;
+import com.jnj.myacuvue.pro.models.OTPNewPhoneValidateRequest;
+import com.jnj.myacuvue.pro.models.OTPPhoneGenerateRequest;
+import com.jnj.myacuvue.pro.models.OTPPhoneValidateRequest;
+import com.jnj.myacuvue.pro.models.OperationCustomerProfileRequestModel;
+import com.jnj.myacuvue.pro.models.OperationsConsumerRequest;
+import com.jnj.myacuvue.pro.models.OperationsETrialRedeemRequest;
+import com.jnj.myacuvue.pro.models.PartnershipCouponDetailsRequest;
+import com.jnj.myacuvue.pro.models.ProProfileRequest;
+import com.jnj.myacuvue.pro.models.ProSaveUserRoleAndStoreRequest;
+import com.jnj.myacuvue.pro.models.ProUserDetailsRequest;
+import com.jnj.myacuvue.pro.models.ProUserListRequest;
+import com.jnj.myacuvue.pro.models.ProductDetailsRequest;
+import com.jnj.myacuvue.pro.model
