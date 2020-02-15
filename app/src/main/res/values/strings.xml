@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">WeatherApp</string>
+    <string name="network_error_message">We cannot connect to the network. Please check your internet connection and try again</string>
+    <string name="app_error_message">We have encountered an error. Please try again.</string>
+    <string name="alert">Alert!</string>
+    <string name="retry">Retry</string>
+    <string name="no_city_alert">Please give correct city name</string>
+    <string name="app_id">d03f99c03a561a0541a762bc572fa766</string>
+    <string name="city_name">Enter City name</string>
+    <string name="temperature_button_text">Show Temperature</string>
+    <string name="temperature_text">Temperature</string>
+    <string name="forecast_button_text">Forecast</string>
+    <string name="home_button_text">Home</string>
+
 </resources>

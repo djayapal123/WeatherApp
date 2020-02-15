@@ -5,65 +5,93 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-
     <LinearLayout
-        android:id="@+id/ll_city"
-        android:layout_margin="15dp"
+        android:id="@+id/ll_firstView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:gravity="center">
 
-        <TextView
-            android:id="@+id/tv_city"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:text="Enter City name" />
-
-        <EditText
-            android:id="@+id/et_cityName"
+        <LinearLayout
+            android:id="@+id/ll_city"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:inputType="textPersonName" />
+            android:layout_margin="15dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_city"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/city_name" />
+
+            <EditText
+                android:id="@+id/et_cityName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:inputType="textPersonName" />
+        </LinearLayout>
+        <Button
+            android:id="@+id/getTempButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ll_city"
+            android:text="@string/temperature_button_text"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/getTempButton"
+            android:layout_margin="15dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:text="@string/temperature_text" />
+
+            <TextView
+                android:id="@+id/tv_tempCelsius"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:layout_weight="1" />
+
+        </LinearLayout>
     </LinearLayout>
 
     <Button
-        android:id="@+id/getTempButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/ll_city"
-        android:text="Show Temperature"
-        android:layout_centerInParent="true" />
-
-    <LinearLayout
+        android:id="@+id/forecastButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="@string/forecast_button_text"
+        android:layout_margin="15dp"
+        android:layout_alignParentBottom="true"
+        />
+
+    <LinearLayout
+        android:id="@+id/ll_forecast"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="horizontal"
-        android:layout_below="@+id/getTempButton"
-        android:layout_margin="5dp"
-        android:gravity="center"
+        android:layout_margin="15dp"
+        android:visibility="gone"
+        android:background="@color/colorAccent"
         >
 
         <TextView
-            android:id="@+id/tv_temperature"
+            android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="5dp"
             android:layout_weight="1"
-            android:text="Temperature"
-            android:gravity="center"
-            />
-
-        <TextView
-            android:id="@+id/tv_tempCelsius"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dp"
-            android:layout_weight="1"
-            android:gravity="center" />
-
+            android:text="@string/temperature_text" />
     </LinearLayout>
+
 
 </RelativeLayout>

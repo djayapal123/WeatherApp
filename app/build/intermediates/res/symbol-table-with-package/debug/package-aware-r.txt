@@ -23,6 +23,8 @@ anim btn_radio_to_off_mtrl_ring_outer_path_animation
 anim btn_radio_to_on_mtrl_dot_group_animation
 anim btn_radio_to_on_mtrl_ring_outer_animation
 anim btn_radio_to_on_mtrl_ring_outer_path_animation
+anim slide_down
+anim slide_up
 attr actionBarDivider
 attr actionBarItemBackground
 attr actionBarPopupTheme
@@ -659,6 +661,7 @@ drawable btn_radio_off_mtrl
 drawable btn_radio_off_to_on_mtrl_animation
 drawable btn_radio_on_mtrl
 drawable btn_radio_on_to_off_mtrl_animation
+drawable error
 drawable ic_launcher_background
 drawable ic_launcher_foreground
 drawable notification_action_background
@@ -763,6 +766,7 @@ id end
 id et_cityName
 id expand_activities_button
 id expanded_menu
+id forecastButton
 id forever
 id getTempButton
 id gone
@@ -783,6 +787,8 @@ id line3
 id listMode
 id list_item
 id ll_city
+id ll_firstView
+id ll_forecast
 id message
 id middle
 id multiply
@@ -847,6 +853,7 @@ id text
 id text2
 id textSpacerNoButtons
 id textSpacerNoTitle
+id textView
 id time
 id title
 id titleDividerNoCustom
@@ -944,9 +951,19 @@ string abc_searchview_description_voice
 string abc_shareactionprovider_share_with
 string abc_shareactionprovider_share_with_application
 string abc_toolbar_collapse_description
+string alert
+string app_error_message
+string app_id
 string app_name
+string city_name
+string forecast_button_text
+string network_error_message
+string no_city_alert
+string retry
 string search_menu_title
 string status_bar_notification_info_overflow
+string temperature_button_text
+string temperature_text
 style AlertDialog_AppCompat
 style AlertDialog_AppCompat_Light
 style Animation_AppCompat_Dialog
